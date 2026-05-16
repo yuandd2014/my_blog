@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Post": {
+      "title": "Blog Post",
+      "description": "A single blog post entry",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the post" },
+        "content": { "type": "string", "description": "Markdown content of the post" },
+        "excerpt": { "type": "string", "description": "A short summary of the post" },
+        "createdAt": { "type": "timestamp" },
+        "updatedAt": { "type": "timestamp" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "published": { "type": "boolean" }
+      },
+      "required": ["title", "content", "createdAt", "authorId"]
+    }
+  },
+  "firestore": {
+    "posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Collection of all blog posts"
+    }
+  }
+}

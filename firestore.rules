@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && 
+             request.auth.token.email == 'yuandd20140412@gmail.com' &&
+             request.auth.token.email_verified == true;
+    }
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function existing() { return resource.data; }
+    function incoming() { return request.resource.data; }
+
+    function isValidPost(data) {
+      return data.keys().hasAll(['title', 'content', 'createdAt', 'authorId', 'published']) &&
+             data.size() >= 5 && data.size() <= 8 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 100000 &&
+             data.authorId is string &&
+             data.published is bool &&
+             data.createdAt is timestamp &&
+             (data.get('updatedAt', null) == null || data.updatedAt is timestamp) &&
+             (data.get('excerpt', null) == null || (data.excerpt is string && data.excerpt.size() <= 500)) &&
+             (data.get('authorName', null) == null || (data.authorName is string && data.authorName.size() <= 100));
+    }
+
+    match /posts/{postId} {
+      allow get: if isValidId(postId) && (resource.data.published == true || isAdmin());
+      allow list: if resource.data.published == true || isAdmin();
+
+      allow create: if isAdmin() && 
+                       isValidId(postId) &&
+                       isValidPost(incoming()) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().createdAt == request.time;
+                       
+      allow update: if isAdmin() && 
+                       isValidId(postId) &&
+                       isValidPost(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'excerpt', 'published', 'updatedAt'])) &&
+                       incoming().updatedAt == request.time;
+
+      allow delete: if isAdmin() && isValidId(postId);
+    }
+  }
+}

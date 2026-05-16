@@ -1,0 +1,8 @@
+{
+  "name": "Personal Blog",
+  "description": "A personal blog with a backend to add and view posts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
